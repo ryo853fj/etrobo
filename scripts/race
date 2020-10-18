@@ -520,6 +520,12 @@ if [ "$mode" == "zip" ] || [ "$mode" == "upload" ]; then
     echo "comming soon: upload mode"
 else
     # launch sim
+    terminator_path="$raceFolder"
+    canceller_path="$raceFolder/Requests"
+    rm -f "$terminator_path/retire"
+    rm -f "$canceller_path"/cancel_*
+    unset terminator
+    unset canceller
     echo "race sequencer: launch race on $course course"
     cd "$ETROBO_SIM_DIST/__race"
     sim $sim_ver $course stdout btcat launch __race > console.log &
@@ -527,8 +533,8 @@ else
     loop="loop"
     while [ -n "$sim_pid" ] && [ -n "`ps -fp $sim_pid | sed '1d'`" ] && [ -n "$loop" ]; do
         # accept retire or cancel request
-        terminator="$raceFolder/retire"
-        canceller="$raceFolder/Requests/`echo $target | sed -E \"s/^(.*).zip$/cancel_\1.txt/\"`"
+        terminator="$terminator_path/retire"
+        canceller="$canceller_path/`echo $target | sed -E \"s/^(.*).zip$/cancel_\1.txt/\"`"
         if [ -f "$terminator" ] || [ -f "$canceller" ]; then
             unset loop
         fi
@@ -551,12 +557,12 @@ else
     if [ -f "$canceller" ]; then
         echo "race sequencer: 'cancel' requested"
         echo "NOTICE: This race was cancelled from web form." >> console.log
+        rm -f "$canceller"
     elif [ -f "$terminator" ]; then
         echo "race sequencer: 'retire' requested"
         echo "NOTICE: This race was judgemented \"retire\" by a race marshall." >> console.log
+        rm -f "$terminator"
     fi
-    rm -f "$canceller"
-    rm -f "$terminator"
 
     # prepare result folder
     echo "race sequencer: prepare result folder"
