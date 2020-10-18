@@ -251,7 +251,7 @@ else
                 while [ -n "$pid" ]; do
                     last_pid=$pid
                     if [ "`ps -fp $pid | sed '1d'`" ]; then
-                        kill $pid 2>&1 > /dev/null
+                        kill $pid > /dev/null 2>&1
                         if [ $? -eq 1 ]; then
                             echo "[ asp controller: unable to kill #$pid ]"
                         fi

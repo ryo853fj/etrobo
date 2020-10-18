@@ -221,57 +221,61 @@ if [ "$mode" == "zip" ] || [ "$mode" == "upload" ]; then
     fi
 
     # prepare l_app
-    echo -n "file archiver: Athrill app for Left course: "
-    l_app="${projName}.asp"
-    if [ -f "$proj/l_$l_app" ]; then
-        l_app="l_$l_app"
-    elif [ -n "`ls "$proj" | grep ^l_.*\.asp$`" ]; then
-        l_app="`ls "$proj" | grep ^l_.*\.asp$ | head -n 1`"
-    elif [ -f "$proj/$l_app" ]; then
-        l_app="$l_app"
-    elif [ -n "`ls "$proj" | grep -v ^l_ | grep -v ^r_ | grep ^.*\.asp$`" ]; then
-        l_app="`ls "$proj" | grep -v ^l_ | grep -v ^r_ | grep ^.*\.asp$ | head -n 1`"
-    else
-        unset l_app
-    fi
-    if [ -n "$l_app" ];then
-        cp -f "$proj/$l_app" "$raceTemp/l___race.asp"
-        if [ "$?" == "0" ]; then
-            echo "'$l_app' is copied as l___race.asp."
+    if [ "$course" == "auto" ] || [ "$course" == "left" ]; then
+        echo -n "file archiver: Athrill app for Left course: "
+        l_app="${projName}.asp"
+        if [ -f "$proj/l_$l_app" ]; then
+            l_app="l_$l_app"
+        elif [ -n "`ls "$proj" | grep ^l_.*\.asp$`" ]; then
+            l_app="`ls "$proj" | grep ^l_.*\.asp$ | head -n 1`"
+        elif [ -f "$proj/$l_app" ]; then
+            l_app="$l_app"
+        elif [ -n "`ls "$proj" | grep -v ^l_ | grep -v ^r_ | grep ^.*\.asp$`" ]; then
+            l_app="`ls "$proj" | grep -v ^l_ | grep -v ^r_ | grep ^.*\.asp$ | head -n 1`"
         else
-            echo "ERROR while coping."
-            exit $ERR_ARC_COPY_FAILED
+            unset l_app
         fi
-    else
-        echo "not found."
-        exit $ERR_ARC_FILE_NOT_FOUND
+        if [ -n "$l_app" ];then
+            cp -f "$proj/$l_app" "$raceTemp/l___race.asp"
+            if [ "$?" == "0" ]; then
+                echo "'$l_app' is copied as l___race.asp."
+            else
+                echo "ERROR while coping."
+                exit $ERR_ARC_COPY_FAILED
+            fi
+        else
+            echo "not found."
+            exit $ERR_ARC_FILE_NOT_FOUND
+        fi
     fi
 
     # prepare r_app
-    echo -n "file archiver: Athrill app for Right course: "
-    r_app="${projName}.asp"
-    if [ -f "$proj/r_$r_app" ]; then
-        r_app="r_$r_app"
-    elif [ -n "`ls "$proj" | grep ^r_.*\.asp$`" ]; then
-        r_app="`ls "$proj" | grep ^r_.*\.asp$ | head -n 1`"
-    elif [ -f "$proj/$r_app" ]; then
-        r_app="$r_app"
-    elif [ -n "`ls "$proj" | grep -v l_ | grep -v r_ | grep ^.*\.asp$`" ]; then
-        r_app="`ls "$proj" | grep -v l_ | grep -v r_ | grep ^.*\.asp$ | head -n 1`"
-    else
-        unset r_app
-    fi
-    if [ -n "$r_app" ];then
-        cp -f "$proj/$r_app" "$raceTemp/r___race.asp"
-        if [ "$?" == "0" ]; then
-            echo "'$r_app' is copied as r___race.asp."
+    if [ "$course" == "auto" ] || [ "$course" == "right" ]; then
+        echo -n "file archiver: Athrill app for Right course: "
+        r_app="${projName}.asp"
+        if [ -f "$proj/r_$r_app" ]; then
+            r_app="r_$r_app"
+        elif [ -n "`ls "$proj" | grep ^r_.*\.asp$`" ]; then
+            r_app="`ls "$proj" | grep ^r_.*\.asp$ | head -n 1`"
+        elif [ -f "$proj/$r_app" ]; then
+            r_app="$r_app"
+        elif [ -n "`ls "$proj" | grep -v l_ | grep -v r_ | grep ^.*\.asp$`" ]; then
+            r_app="`ls "$proj" | grep -v l_ | grep -v r_ | grep ^.*\.asp$ | head -n 1`"
         else
-            echo "ERROR while coping."
-            exit $ERR_ARC_COPY_FAILED
+            unset r_app
         fi
-    else
-        echo "not found."
-        exit $ERR_ARC_FILE_NOT_FOUND
+        if [ -n "$r_app" ];then
+            cp -f "$proj/$r_app" "$raceTemp/r___race.asp"
+            if [ "$?" == "0" ]; then
+                echo "'$r_app' is copied as r___race.asp."
+            else
+                echo "ERROR while coping."
+                exit $ERR_ARC_COPY_FAILED
+            fi
+        else
+            echo "not found."
+            exit $ERR_ARC_FILE_NOT_FOUND
+        fi
     fi
     target="upload.zip"
 else
