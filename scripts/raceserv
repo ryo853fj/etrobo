@@ -80,8 +80,8 @@ if [ -n "$2" ] && [ "$1" == "fp0" ] || [ "$1" == "fp1" ] || [ "$1" == "fp2" ] ||
                 unset main_loop
             fi
             # wait requests
-            ls="`ls \"$raceFolder/Requests\" 2>&1`"
-            ls "$raceFolder/Requests" > /dev/null 2>&1 
+            ls="`ls \"$raceFolder/Requests\" | grep -v ^cancel_ 2>&1`"
+            ls "$raceFolder/Requests" | grep -v ^cancel_ > /dev/null 2>&1 
             if [ "$?" == "0" ] && [ -n "$ls"  ]; then
                 unset wait_loop
             fi
@@ -109,7 +109,7 @@ if [ -n "$2" ] && [ "$1" == "fp0" ] || [ "$1" == "fp1" ] || [ "$1" == "fp2" ] ||
                         "$ERR_SEQ_MD5SUM_MISMATCH" ) 
                             mes="illegal zip file: MD5 check sum mismatched. you should run 'update' first." ;;
                         "$ERR_SEQ_FFMPEG_FAILED" ) 
-                            mes="video encode error: This error appears when your HackEV did flying-start." ;;
+                            mes="video encode error: This error appears when your HackEV did flying-start or Athrill app was corrupted." ;;
                         * ) 
                             mes="an error has occured while this race." ;;
                     esac

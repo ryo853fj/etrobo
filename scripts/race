@@ -625,7 +625,11 @@ else
     fi
     rm -rf $dest
     rm -rf "$ETROBO_SIM_DIST/__race"
-    
+    canceller="$canceller_path/`echo $target | sed -E \"s/^(.*).zip$/cancel_\1.txt/\"`"
+    if [ -f "$canceller" ]; then
+        rm -f "$canceller"
+    fi
+
     echo "race sequencer: race (requestID=$requestID) is finished successfully."
 fi
 exit $exit_code
