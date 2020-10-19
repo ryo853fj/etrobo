@@ -301,7 +301,6 @@ else
             echo "race sequencer: $target isn't contain '__race' folder."
             exit $ERR_SEQ_RACE_NOT_FOUND
         elif [ ! -f "__race/l___race.asp" ] && [ ! -f "__race/r___race.asp" ]; then
-            ls __race
             echo "race sequencer: $target isn't contain '*___race.asp' file."
             exit $ERR_SEQ_ASP_NOT_FOUND
         fi
