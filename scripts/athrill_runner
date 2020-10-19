@@ -56,12 +56,13 @@ ${athrill2} -c1 -m ${memory_txt} -d ${device_config_txt} -t -1 "$target" 2>&1\
             athrill_pid=$(ps -f | sed '1d' | grep -v athrill_runner | grep -v ' tee ' | awk '{print $2" "$3}' | while read line; do if [ "`echo \"$line\" | awk '{print $2}'`" == "$runner_pid" ]; then echo "$line" | awk '{print $1}'; fi; done)
         fi
         if [ -z "$athrill_pid" ]; then
-            echo "[ athrill_runner #$runner_pid: FATAL ERROR: can't get Athrill_PID ]" | tee $console
-            athrill_pid=$runner_pid
+            echo "[ athrill_runner #$runner_pid: FATAL ERROR: Failed to launch Athrill VM ]" | tee $console
+            unset loop
+        else
+            echo $athrill_pid >> "$runner"
+            echo $runner_pid >> "$runner"
+            echo "[ athrill_runner #$runner_pid: Athrill VM is running on #$athrill_pid ]" | tee $console > /dev/null
         fi
-        echo $athrill_pid >> "$runner"
-        echo $runner_pid >> "$runner"
-        echo "[ athrill_runner #$runner_pid: Athrill VM is running on #$athrill_pid ]" | tee $console > /dev/null
     else
         # get athrill status
         read -t 1 line
@@ -93,9 +94,12 @@ ${athrill2} -c1 -m ${memory_txt} -d ${device_config_txt} -t -1 "$target" 2>&1\
         
 
         # terminate this thread
-        if [ "`echo $line | grep \"^ERROR can not open$\"`" ]; then
-            unset loop
-        fi
+#        if [ "`echo $line | grep \"^ERROR can not open$\"`" ]; then
+#            unset loop
+#        fi
+#        if [ "`echo $line | grep \"^ERROR can not fread$\"`" ]; then
+#            unset loop
+#        fi
         if [ -z "`ps -fp $athrill_pid | sed '1d'`" ]; then
             echo "[ $app_select runner: exit: Athrill2 was shutted down ]" | tee $console
             echo "[ $app_select runner: duration of running: $SECONDS secs in real-world time ]" | tee $console
