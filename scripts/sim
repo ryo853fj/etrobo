@@ -229,13 +229,19 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
     #   |- l_app.status
     #   |- r_app.status
     #
-    # `sim launch [projName]` lanches both the UnityETroboSim and a Athrill app
-    # `sim only launch [projName]` only lanches a Athrill app
+    # `sim launch [projName]` launches both the UnityETroboSim and a Athrill app
+    # `sim only launch [projName]` only launches a Athrill app
+    # `sim matchmaker launch [projName]` only launches a Athrill app as `run with matchmaker` mode
     if [ "$1" = "wait" ]; then
         shift
     fi
     if [ "$1" = "only" ]; then
-        sim_opt="only"
+        sim_opt="$1"
+        shift
+    elif [ "$1" = "matchmaker" ]; then
+        sim_opt="$1"
+        unset load_prefs
+        unset auto_start
         shift
     else
         unset sim_opt
@@ -279,10 +285,15 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
         # launch UnityETroboSim at background
         if [ "$sim_opt" != "only" ]; then
             if [ -z `sim check sim` ]; then
-                if [ -f "$ETROBO_SIM_LOG" ]; then
-                    mv -f "$ETROBO_SIM_LOG" "$(dirname "$ETROBO_SIM_LOG")/Player-prev.log"
+                if [ "$sim_opt" != "matchmaker" ]; then
+                    if [ -f "$ETROBO_SIM_LOG" ]; then
+                        mv -f "$ETROBO_SIM_LOG" "$(dirname "$ETROBO_SIM_LOG")/Player-prev.log"
+                    fi
+                    eval "$ETROBO_LAUNCH_SIM"
+                else
+                    echo "[ launcher: etrobosim was already terminated. ]" | tee $console
+                    exit 1
                 fi
-                eval "$ETROBO_LAUNCH_SIM"
             fi
             # wait for starting up UnityETrobosim
             if [ "$ETROBO_SIM_VER" == "$ETROBO_PUBLIC_VER" ]; then
@@ -309,25 +320,28 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
             fi
 
             # wait for starting up UIcomm
+            counter=0
             if [ "$comm_ready" == "init" ]; then
                 response=`curl -s -X GET $ETROBO_SIM_COMM -w '\n%{http_code}\n'`
                 json=`echo "$response" | sed '$d'`
                 code=`echo "$response" | tail -n 1`
                 while [ "$code" != "200" ] && [ -n "$loop" ]; do
+                    counter=$(( $counter + 1 ))
+                    if [ $counter -ge 30 ]; then
+                        echo "[ launcher: unable to connect with UIcomm. ]" | tee $console
+                        unset loop
+                        unset comm_ready
+                    fi
                     sleep 0.1
                     response=`curl -s -X GET $ETROBO_SIM_COMM -w '\n%{http_code}\n'`
                     json=`echo "$response" | sed '$d'`
                     code=`echo "$response" | tail -n 1`
                 done
-                if [ "$code" == "200" ]; then
+                if [ -n "$loop" ]; then
                     comm_ready="ready"
                     if [ "$sim_opt" != "skipASP" ]; then
                         echo "[ launcher: connected to UIcomm ]" | tee $console
                     fi
-                else
-                    echo "[ launcher: etrobosim was already terminated. ]" | tee $console
-                    unset comm_ready
-                    unset loop
                 fi
             fi                
 
@@ -359,18 +373,20 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
 
             # exit if no launch
             if [ "$sim_opt" == "skipASP" ]; then
-                if [ -z "$loop" ]; then
-                    exit 1
-                else
+                if [ -n "$loop" ]; then
                     exit 0
+                else
+                    exit 1
                 fi
             fi
 
             if [ "$comm_ready" == "ready" ]; then
                 rm -f result.json
                 # put HackEV onto specified course and wait connected
-                curl -s -X POST -d $app_req $ETROBO_SIM_COMM > /dev/null
-                sleep 1     # @ToDo: its magic number
+                if [ "$sim_opt" != "matchmaker" ]; then
+                    curl -s -X POST -d $app_req $ETROBO_SIM_COMM > /dev/null
+                    sleep 1     # @ToDo: its magic number
+                fi
 
                 # wait for EV3RT is ready
                 counter=0
@@ -421,14 +437,16 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
                     # auto start sequence
                     if [ "$ETROBO_SIM_VER" != "$ETROBO_PUBLIC_VER" ] && [ -n "$loop" ]; then
                         # request PREPARE and wait READY
-                        echo "[ launcher: Go to the start, Ready? ]" | tee $console
+                        if [ "$sim_opt" != "matchmaker" ]; then
+                            echo "[ launcher: Go to the start, Ready? ]" | tee $console
+                        fi
                         json=`curl -s -X GET $ETROBO_SIM_COMM?MEASUREMENT=PREPARE`
                         sleep 1     # @ToDo: its magic number
                         counter=0
                         while [ "`echo $json | jq -r .measurement.mode`" != "READY" ] && [ -n "$loop" ]; do
                             sleep 0.1
                             counter=$(( $counter + 1 ))
-                            if [ $counter -ge 100 ]; then
+                            if [ $counter -ge 100 ] && [ "$sim_opt" != "matchmaker" ]; then
                                 echo "[ launcher: autostart sequence timeout after PREPARE ]" | tee $console
                                 unset loop
                             fi
@@ -440,18 +458,25 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
                             json=`curl -s -X GET $ETROBO_SIM_COMM`
                         done
                         # auto start
-                        echo -n "[ launcher: 3..." | tee $console
-                        sleep 1
-                        echo -n "2..." | tee $console
-                        sleep 1
-                        echo -n "1..." | tee $console
-                        sleep 1
                         if [ -n "$auto_start" ]; then
+                            echo -n "[ launcher: 3..." | tee $console
+                            sleep 1
+                            echo -n "2..." | tee $console
+                            sleep 1
+                            echo -n "1..." | tee $console
+                            sleep 1
                             json=`curl -s -X GET $ETROBO_SIM_COMM?MEASUREMENT=GO`
                             echo " ]" | tee $console
                             echo "[ launcher: Go!!!!!!!! ]" | tee $console
+                        elif [ "$sim_opt" == "matchmaker" ]; then
+                            echo "[ launcher: $sim_select: slave of matchmaker mode ]" | tee $console
+                            if [ -n "$loop" ]; then
+                                exit 0
+                            else
+                                exit 1
+                            fi
                         else
-                            echo "[ launcher: $sim_select: manual start ]" | tee $console
+                            echo "[ launcher: $sim_select: manual start mode ]" | tee $console
                         fi
                     fi
                 fi
@@ -482,26 +507,28 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
                 fi
 
                 # competition rules
-                if [ -z "$start_gate" ] \
-                && [ "`echo $json | jq -r .${sim_select}Measurement.RUN_TIME`" != "0" ]; then
-                    echo "[ launcher: $sim_select: passed Start Gate ]"
-                    start_gate="passed"
-                fi
-                if [ -n "$start_gate" ] && [ -z "$gate1" ] \
-                && [ "`echo $json | jq -r .${sim_select}Measurement.GATE1`" == "1" ]; then
-                    echo "[ launcher: $sim_select: passed Gate 1 ]"
-                    gate1="passed"
-                fi
-                if [ -n "$gate1" ] && [ -z "$gate2" ] \
-                && [ "`echo $json | jq -r .${sim_select}Measurement.GATE2`" == "1" ]; then
-                    echo "[ launcher: $sim_select: passed Gate 2 ]"
-                    gate2="passed"
-                fi
-                if [ -n "$gate2" ] && [ -z "$goal" ] \
-                && [ "`echo $json | jq -r .${sim_select}Measurement.GOAL`" == "1" ]; then
-                    measurement_time=`echo $json | jq -r .${sim_select}Measurement.MEASUREMENT_TIME`
-                    goal=`printf %04d $measurement_time | sed -E 's/^([0-9]*)([0-9]{3})$/\1\.\2/'`
-                    echo "[ launcher: $sim_select: GOAL!  Goal Time: $goal ]"
+                if [ -n "$auto_start" ]; then
+                    if [ -z "$start_gate" ] \
+                    && [ "`echo $json | jq -r .${sim_select}Measurement.RUN_TIME`" != "0" ]; then
+                        echo "[ launcher: $sim_select: passed Start Gate ]"
+                        start_gate="passed"
+                    fi
+                    if [ -n "$start_gate" ] && [ -z "$gate1" ] \
+                    && [ "`echo $json | jq -r .${sim_select}Measurement.GATE1`" == "1" ]; then
+                        echo "[ launcher: $sim_select: passed Gate 1 ]"
+                        gate1="passed"
+                    fi
+                    if [ -n "$gate1" ] && [ -z "$gate2" ] \
+                    && [ "`echo $json | jq -r .${sim_select}Measurement.GATE2`" == "1" ]; then
+                        echo "[ launcher: $sim_select: passed Gate 2 ]"
+                        gate2="passed"
+                    fi
+                    if [ -n "$gate2" ] && [ -z "$goal" ] \
+                    && [ "`echo $json | jq -r .${sim_select}Measurement.GOAL`" == "1" ]; then
+                        measurement_time=`echo $json | jq -r .${sim_select}Measurement.MEASUREMENT_TIME`
+                        goal=`printf %04d $measurement_time | sed -E 's/^([0-9]*)([0-9]{3})$/\1\.\2/'`
+                        echo "[ launcher: $sim_select: GOAL!  Goal Time: $goal ]"
+                    fi
                 fi
             else
                 unset loop
