@@ -646,6 +646,9 @@ else
     if [ "$?" != "0" ];then
         echo "race sequencer: ffmpeg encoding ERROR!!"
         exit_code=$ERR_SEQ_FFMPEG_FAILED
+        if [ "$mode" == "final" ]; then
+            touch "$raceFolder/ERROR"
+        fi
     fi
 
     # add files from matchmaker
