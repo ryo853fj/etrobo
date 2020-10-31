@@ -46,7 +46,7 @@ unset btcat_pid
 runner_pid=$$
 trap "unset loop" SIGTERM SIGINT EXIT
 
-${athrill2} -c1 -m ${memory_txt} -d ${device_config_txt} -t -1 "$target" 2>&1\
+${athrill2} -c1 -m ${memory_txt} -d ${device_config_txt} -t -1 "$target" \ # 2>&1\
 | tee $console_athrill \
 | while [ -n "$loop" ]; do
     if [ -z "$athrill_pid" ]; then
@@ -101,6 +101,7 @@ ${athrill2} -c1 -m ${memory_txt} -d ${device_config_txt} -t -1 "$target" 2>&1\
 #            unset loop
 #        fi
         if [ -z "`ps -fp $athrill_pid | sed '1d'`" ]; then
+            
             echo "[ $app_select runner: exit: Athrill2 was shutted down ]" | tee $console
             echo "[ $app_select runner: duration of running: $SECONDS secs in real-world time ]" | tee $console
             echo "0 $SECONDS" >> "$status"

@@ -531,9 +531,15 @@ else
     cd "$ETROBO_SIM_DIST/__race"
     if [ "$mode" == "final" ]; then
         sim $sim_ver $course stdout btcat matchmaker launch __race > console.log
-        if [ "$?" != "1" ]; then
+        if [ "$?" != "0" ]; then
+            echo "race sequencer: launcher error"
             touch "$raceFolder/ERROR"
+            exit 1
         else
+            rm -f "$raceFolder/left"
+            rm -f "$raceFolder/right"
+            rm -f "$raceFolder/Requests/"*.zip
+            loop="loop"
             while [ -n "$loop" ] && [ -n "`sim check sim`" ]; do
                 sleep 0.1
                 json=`curl -s -X GET $ETROBO_SIM_COMM`
@@ -544,29 +550,33 @@ else
                         unset loop
                     fi
                 fi
+                # accept retire or cancel request
+                terminator="$terminator_path/retire"
+                canceller="$canceller_path/`echo $target | sed -E \"s/^(.*).zip$/cancel_\1.txt/\"`"
+                if [ -f "$terminator" ] || [ -f "$canceller" ]; then
+                    unset loop
+                fi
             done
-            exit 0
         fi
+    else
+        sim $sim_ver $course stdout btcat launch __race > console.log &
+        sim_pid=$!
+        loop="loop"
+        while [ -n "$sim_pid" ] && [ -n "`ps -fp $sim_pid | sed '1d'`" ] && [ -n "$loop" ]; do
+            # accept retire or cancel request
+            terminator="$terminator_path/retire"
+            canceller="$canceller_path/`echo $target | sed -E \"s/^(.*).zip$/cancel_\1.txt/\"`"
+            if [ -f "$terminator" ] || [ -f "$canceller" ]; then
+                unset loop
+            fi
+            sleep 0.1
+        done
+    #    sim_error="$?"
+    #    if [ "$sim_error" != "0" ] && [ "$sim_error" != "143" ];then
+    #        echo "race sequencer: athrill app ERROR!!"
+    #        exit $ERR_SEQ_SIM_LAUNCH_FAILED
+    #    fi
     fi
-
-
-    sim $sim_ver $course stdout btcat launch __race > console.log &
-    sim_pid=$!
-    loop="loop"
-    while [ -n "$sim_pid" ] && [ -n "`ps -fp $sim_pid | sed '1d'`" ] && [ -n "$loop" ]; do
-        # accept retire or cancel request
-        terminator="$terminator_path/retire"
-        canceller="$canceller_path/`echo $target | sed -E \"s/^(.*).zip$/cancel_\1.txt/\"`"
-        if [ -f "$terminator" ] || [ -f "$canceller" ]; then
-            unset loop
-        fi
-        sleep 0.1
-    done
-#    sim_error="$?"
-#    if [ "$sim_error" != "0" ] && [ "$sim_error" != "143" ];then
-#        echo "race sequencer: athrill app ERROR!!"
-#        exit $ERR_SEQ_SIM_LAUNCH_FAILED
-#    fi
 
     # force termination
     if [ -n "`asp check`" ]; then
@@ -638,6 +648,22 @@ else
         exit_code=$ERR_SEQ_FFMPEG_FAILED
     fi
 
+    # add files from matchmaker
+    if [ "$mode" == "final" ]; then
+        echo "race sequencer: waiting for files from matchmaker"
+        filename="`ls -F $raceFolder/Results | grep 'リザルト' | grep -v / | grep -v .zip | while read line; do echo $line | sed -E 's/(.*)\*$/\1/'; done | head -n 1`"
+        while [ -z "$filename" ]; do
+            sleep 0.1
+            filename="`ls -F $raceFolder/Results | grep 'リザルト' | grep -v / | grep -v .zip | while read line; do echo $line | sed -E 's/(.*)\*$/\1/'; done | head -n 1`"
+        done
+        filename="`ls -F $raceFolder/Results | grep -v / | grep -v .zip | while read line; do echo $line | sed -E 's/(.*)\*$/\1/'; done | head -n 1`"
+        while [ -n "$filename" ]; do
+            cp "$raceFolder/results/$filename" "$result/"
+            rm -f "$raceFolder/results/$filename"
+            filename="`ls -F $raceFolder/Results | grep -v / | grep -v .zip | while read line; do echo $line | sed -E 's/(.*)\*$/\1/'; done | head -n 1`"
+        done
+    fi
+
     # zip result files
     echo "race sequencer: zip result files"
     cd "$raceFolder"
@@ -653,6 +679,13 @@ else
         rm -f "$canceller"
     fi
 
+    if [ "$mode" == "final" ]; then
+        echo "race sequencer: waiting for response from matchmaker"
+        touch ZIP
+        while [ -f ZIP ]; do
+            sleep 0.1
+        done
+    fi
     echo "race sequencer: race (requestID=$requestID) is finished successfully."
 fi
 exit $exit_code

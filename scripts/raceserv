@@ -1,4 +1,4 @@
-6c#!/usr/bin/env bash
+#!/usr/bin/env bash
 #
 # raceserv, ET robocon race server
 #   raceserv 
@@ -54,6 +54,13 @@ if [ -n "$2" ] && [ "$1" == "fp0" ] || [ "$1" == "fp1" ] || [ "$1" == "fp2" ] ||
     raceFolder="$2"
     rm -f "$raceFolder/"*.manifest
     cd "$raceFolder"
+    rm -f left
+    rm -f right
+    rm -f ERROR
+    rm -f ZIP
+
+    asp stop
+    asp deep stop
 
     # launch taskscheduler for ETroboSimRunner.Relay
     if [ -n "$vm" ]; then
