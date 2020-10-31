@@ -322,6 +322,9 @@ else
         fi
         if [ "`(find __race -type f -exec md5sum -b {} \; && find __race) | env LC_ALL=C sort | md5sum -b`" != "$sum" ]; then
             echo "race sequencer: ERROR: mismatch md5sum"
+            if [ "$mode" == "final" ]; then
+                touch "$raceFolder/ERROR"
+            fi
             exit $ERR_SEQ_MD5SUM_MISMATCH
         fi
     else
