@@ -527,7 +527,29 @@ else
     unset terminator
     unset canceller
     echo "race sequencer: launch race on $course course"
+
     cd "$ETROBO_SIM_DIST/__race"
+    if [ "$mode" == "final" ]; then
+        sim $sim_ver $course stdout btcat matchmaker launch __race > console.log
+        if [ "$?" != "1" ]; then
+            touch "$canceller_path/ERROR"
+        else
+            while [ -n "$loop" ] && [ -n "`sim check sim`" ]; do
+                sleep 0.1
+                json=`curl -s -X GET $ETROBO_SIM_COMM`
+                if [ -n "$json" ]; then
+                    if [ "`echo $json | jq -r .measurement.mode`" == "END" ]; then
+                        echo "[ launcher: end of this race ]" | tee $console
+                        echo "$json" | jq . > result.json
+                        unset loop
+                    fi
+                fi
+            done
+            exit 0
+        fi
+    fi
+
+
     sim $sim_ver $course stdout btcat launch __race > console.log &
     sim_pid=$!
     loop="loop"

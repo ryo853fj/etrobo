@@ -66,6 +66,7 @@ if [ -n "$2" ] && [ "$1" == "fp0" ] || [ "$1" == "fp1" ] || [ "$1" == "fp2" ] ||
     #
     # to stop server safely, `touch stop` on race folder
     #
+    unset course
     main_loop="loop"
     while [ -n "$main_loop" ]; do
         echo
@@ -80,18 +81,35 @@ if [ -n "$2" ] && [ "$1" == "fp0" ] || [ "$1" == "fp1" ] || [ "$1" == "fp2" ] ||
                 unset main_loop
             fi
             # wait requests
-            ls="`ls \"$raceFolder/Requests\" | grep -v ^cancel_ 2>&1`"
-            ls "$raceFolder/Requests" | grep -v ^cancel_ > /dev/null 2>&1 
-            if [ "$?" == "0" ] && [ -n "$ls"  ]; then
-                unset wait_loop
+            if [ "$mode" == "final" ]; then
+                if [ -f "$raceFolder/Requests/left" ]; then
+                    course="left"
+                elif [ -f "$raceFolder/Requests/right" ]; then
+                    course="right"
+                fi
+            else
+                course="any"
+            fi
+
+            if [ -n "$course" ]; then
+                ls="`ls \"$raceFolder/Requests\" | grep -v ^cancel_ | grep -v ^left$ | grep -v ^right$ 2>&1`"
+                ls "$raceFolder/Requests" | grep -v ^cancel_ | grep -v ^left$ | grep -v ^right$ > /dev/null 2>&1 
+                if [ "$?" == "0" ] && [ -n "$ls"  ]; then
+                    unset wait_loop
+                fi
             fi
         done
         if [ -n "$main_loop" ]; then
             #
             # invoke race
             #
-            race $sim_ver $mode "$raceFolder"
-            race_error="$?"
+            if [ "$mode" == "final" ]; then
+                race $sim_ver $mode $course "$raceFolder"
+                race_error="$?"
+            else
+                race $sim_ver $mode "$raceFolder"
+                race_error="$?"
+            fi
 
             # get zip filename from manifest
             manifest="`ls \"$raceFolder\" | grep .manifest$`"
