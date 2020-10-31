@@ -532,7 +532,7 @@ else
     if [ "$mode" == "final" ]; then
         sim $sim_ver $course stdout btcat matchmaker launch __race > console.log
         if [ "$?" != "1" ]; then
-            touch "$canceller_path/ERROR"
+            touch "$raceFolder/ERROR"
         else
             while [ -n "$loop" ] && [ -n "`sim check sim`" ]; do
                 sleep 0.1
@@ -571,7 +571,9 @@ else
     # force termination
     if [ -n "`asp check`" ]; then
         asp stop
-        sim stop sim
+        if [ "$mode" != "final" ]; then
+            sim stop sim
+        fi
         wait $sim_pid
     fi
 

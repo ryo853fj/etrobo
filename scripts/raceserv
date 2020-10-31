@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+6c#!/usr/bin/env bash
 #
 # raceserv, ET robocon race server
 #   raceserv 
@@ -82,9 +82,9 @@ if [ -n "$2" ] && [ "$1" == "fp0" ] || [ "$1" == "fp1" ] || [ "$1" == "fp2" ] ||
             fi
             # wait requests
             if [ "$mode" == "final" ]; then
-                if [ -f "$raceFolder/Requests/left" ]; then
+                if [ -f "$raceFolder/left" ]; then
                     course="left"
-                elif [ -f "$raceFolder/Requests/right" ]; then
+                elif [ -f "$raceFolder/right" ]; then
                     course="right"
                 fi
             else
@@ -92,8 +92,8 @@ if [ -n "$2" ] && [ "$1" == "fp0" ] || [ "$1" == "fp1" ] || [ "$1" == "fp2" ] ||
             fi
 
             if [ -n "$course" ]; then
-                ls="`ls \"$raceFolder/Requests\" | grep -v ^cancel_ | grep -v ^left$ | grep -v ^right$ 2>&1`"
-                ls "$raceFolder/Requests" | grep -v ^cancel_ | grep -v ^left$ | grep -v ^right$ > /dev/null 2>&1 
+                ls="`ls \"$raceFolder/Requests\" | grep -v ^cancel_ 2>&1`"
+                ls "$raceFolder/Requests" | grep -v ^cancel_ > /dev/null 2>&1 
                 if [ "$?" == "0" ] && [ -n "$ls"  ]; then
                     unset wait_loop
                 fi
