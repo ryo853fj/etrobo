@@ -58,6 +58,8 @@ if [ -n "$2" ] && [ "$1" == "fp0" ] || [ "$1" == "fp1" ] || [ "$1" == "fp2" ] ||
     rm -f right
     rm -f ERROR
     rm -f ZIP
+    rm -f END
+    rm -f WAITING
 
     asp stop
     asp deep stop

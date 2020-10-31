@@ -286,6 +286,12 @@ else
     if [ -n "$target" ]; then
         echo "race sequencer: get $target"
         touch "$raceFolder/${target}.manifest"
+        if [ "$mode" == "final" ]; then
+            rm -f "$raceFolder/ERROR"
+            rm -f "$raceFolder/ZIP"
+            rm -f "$raceFolder/END"
+            rm -f "$raceFolder/WAITING"
+        fi
         cp "$raceFolder/Requests/$target" "$ETROBO_SIM_DIST"
         unzip -o $target > /dev/null
         unzip_error="$?"
@@ -547,6 +553,7 @@ else
                     if [ "`echo $json | jq -r .measurement.mode`" == "END" ]; then
                         echo "[ launcher: end of this race ]" | tee $console
                         echo "$json" | jq . > result.json
+                        touch "$raceFolder/END"
                         unset loop
                     fi
                 fi
@@ -654,6 +661,7 @@ else
     # add files from matchmaker
     if [ "$mode" == "final" ]; then
         echo "race sequencer: waiting for files from matchmaker"
+        touch "$raceFolder/WAITING"
         filename="`ls -F $raceFolder/Results | grep 'リザルト' | grep -v / | grep -v .zip | while read line; do echo $line | sed -E 's/(.*)\*$/\1/'; done | head -n 1`"
         while [ -z "$filename" ]; do
             sleep 0.1
@@ -688,6 +696,9 @@ else
         while [ -f ZIP ]; do
             sleep 0.1
         done
+        rm -f "$raceFolder/ERROR"
+        rm -f "$raceFolder/END"
+        rm -f "$raceFolder/WAITING"
     fi
     echo "race sequencer: race (requestID=$requestID) is finished successfully."
 fi
