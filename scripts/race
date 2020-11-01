@@ -651,7 +651,11 @@ else
 
     # encode race video
     echo "race sequencer: encode race video"
-    ffmpeg -r 15 -i "$captDir_bashPath/${coursePrefix}_%08d.png"  -vcodec libx264 -pix_fmt yuv420p -loglevel 8 "$result/$dest.mp4" 
+    if [ "$mode" = "final" ]; then
+        ffmpeg -r 60 -i "$captDir_bashPath/${coursePrefix}_%08d.png"  -vcodec libx264 -pix_fmt yuv420p -loglevel 8 "$result/$dest.mp4" 
+    else
+        ffmpeg -r 15 -i "$captDir_bashPath/${coursePrefix}_%08d.png"  -vcodec libx264 -pix_fmt yuv420p -loglevel 8 "$result/$dest.mp4" 
+    fi
     if [ "$?" != "0" ];then
         echo "race sequencer: ffmpeg encoding ERROR!!"
         exit_code=$ERR_SEQ_FFMPEG_FAILED
