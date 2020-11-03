@@ -75,7 +75,7 @@ elif [ "$1" == "spread" ]; then
         cd "$results"
     done
 
-# changeFps </path/to/up_sim> [reencode <divider>] fps
+# changeFps </path/to/up_sim> [reencode <divider>] <fps>
 elif [ "$1" == "changeFps" ]; then
     src="$2"
     unset reencode
@@ -105,9 +105,67 @@ elif [ "$1" == "changeFps" ]; then
         fi
         cd "$src"
     done
+
+# updateResult </path/to/up_sim>
+elif [ "$1" == "updateResult" ]; then
+    src="$2"
+    cd "$src"
+    good=0
+    bad=0
+    for target in `ls -1 "$src"`; do
+#    line="E179_L"
+        if [ -d "$src/$target" ]; then
+            teamID=${target:0:4}
+            course=${target:5:1}
+            if [ "$course" == "L" ]; then
+                select="left"
+            else
+                select="right"
+            fi
+            cd "$src/$target"
+            csv="`ls -1 *.csv`"
+            jsonTime="`cat result.json | jq -r .${select}Measurement.TIME`"
+            line=1
+            csvTime="`cat $csv | tail -n 1 | awk -F ',' '{print $4}'`"
+            while [ "$jsonTime" -lt "$csvTime" ]; do
+                    line=$(( $line + 1 ))
+                    csvTime="`cat $csv | tail -n $line | head -n 1 | awk -F ',' '{print $4}'`"
+            done
+            if [ "$line" == "1" ]; then
+                good=$(( $good + 1 ))
+                echo "$target: $jsonTime -> $csvTime"
+            else
+                bad=$(( $bad + 1 ))
+                #echo "$target drifted $line frame"
+            fi
+        fi
+    done
+    echo "good: $good  bad: $bad"
+
+# getCsv </path/to/up_sim>
+elif [ "$1" == "getCsv" ]; then
+    src="$2"
+    cd "$src"
+    rm -rf ../csv
+    mkdir ../csv
+    count=0
+    for target in `ls -1 "$src"`; do
+        if [ -d "$src/$target" ]; then
+            teamID=${target:0:4}
+            course=${target:5:1}
+            cd "$src/$target"
+            csv="`ls -1 *.csv`"
+            echo "$csv -> ../../csv/$target.csv"
+            cp $csv ../../csv/$target.csv
+            count=$(( $count + 1 ))
+        fi
+    done
+    echo "count: $count"
 else
     echo "usage:"
     echo "  prepare_final.sh expand </path/to/Datum>"
     echo "  prepare_final.sh spread </path/to/Results>"
-    echo "  prepare_final.sh changeFps </path/to/up_sim> [reencode <divider>] fps"
+    echo "  prepare_final.sh changeFps </path/to/up_sim> [reencode <divider>] <fps>"
+    echo "  prepare_final.sh updateResult </path/to/up_sim>"
+    echo "  prepare_final.sh getCsv </path/to/up_sim>"
 fi
