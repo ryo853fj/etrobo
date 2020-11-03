@@ -161,6 +161,18 @@ elif [ "$1" == "getCsv" ]; then
         fi
     done
     echo "count: $count"
+
+# updateMatchmaker </path/to/up_sim> </path/to/update>
+elif [ "$1" == "updateMatchmaker" ]; then
+    upsim="$2"
+    update="$3"
+    cd "$upsim"
+    for target in `ls -1 "$update"`; do
+        teamID=${target:2:4}
+        course=${target:0:1}
+        echo "${teamID}_${course} <- $target"
+        cp "$update/$target" "${teamID}_${course}"
+    done
 else
     echo "usage:"
     echo "  prepare_final.sh expand </path/to/Datum>"
