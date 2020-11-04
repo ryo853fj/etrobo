@@ -110,10 +110,8 @@ elif [ "$1" == "changeFps" ]; then
 elif [ "$1" == "updateResult" ]; then
     src="$2"
     cd "$src"
-    good=0
-    bad=0
+    count=0
     for target in `ls -1 "$src"`; do
-#    line="E179_L"
         if [ -d "$src/$target" ]; then
             teamID=${target:0:4}
             course=${target:5:1}
@@ -124,23 +122,50 @@ elif [ "$1" == "updateResult" ]; then
             fi
             cd "$src/$target"
             csv="`ls -1 *.csv`"
-            jsonTime="`cat result.json | jq -r .${select}Measurement.TIME`"
-            line=1
-            csvTime="`cat $csv | tail -n 1 | awk -F ',' '{print $4}'`"
-            while [ "$jsonTime" -lt "$csvTime" ]; do
-                    line=$(( $line + 1 ))
-                    csvTime="`cat $csv | tail -n $line | head -n 1 | awk -F ',' '{print $4}'`"
-            done
-            if [ "$line" == "1" ]; then
-                good=$(( $good + 1 ))
-                echo "$target: $jsonTime -> $csvTime"
-            else
-                bad=$(( $bad + 1 ))
-                #echo "$target drifted $line frame"
-            fi
+            record="`cat $csv | tail -n 1 | sed -E 's/\r//g'`"
+            csvTime="`echo "$record" | awk -F ',' '{print $1}'`"
+            csvCounter="`echo "$record" | awk -F ',' '{print $2}'`"
+            csvFilename="`echo "$record" | awk -F ',' '{print $3}'`"
+            csvTIME="`echo "$record" | awk -F ',' '{print $4}'`"
+            csvMEASUREMENT_TIME="`echo "$record" | awk -F ',' '{print $5}'`"
+            csvRUN_TIME="`echo "$record" | awk -F ',' '{print $6}'`"
+            csvGATE1="`echo "$record" | awk -F ',' '{print $7}'`"
+            csvGATE2="`echo "$record" | awk -F ',' '{print $8}'`"
+            csvGOAL="`echo "$record" | awk -F ',' '{print $9}'`"
+            csvGARAGE_STOP="`echo "$record" | awk -F ',' '{print $10}'`"
+            csvGARAGE_TIME="`echo "$record" | awk -F ',' '{print $11}'`"
+            csvSLALOM="`echo "$record" | awk -F ',' '{print $12}'`"
+            csvPETBOTTLE="`echo "$record" | awk -F ',' '{print $13}'`"
+            csvBLOCK_IN_GARAGE="`echo "$record" | awk -F ',' '{print $14}'`"
+            csvBLOCK_YUKOIDO="`echo "$record" | awk -F ',' '{print $15}'`"
+            csvCARD_NUMBER_CIRCLE="`echo "$record" | awk -F ',' '{print $16}'`"
+            csvBLOCK_NUMBER_CIRCLE="`echo "$record" | awk -F ',' '{print $17}'`"
+            csvBLOCK_BINGO="`echo "$record" | awk -F ',' '{print $18}'`"
+            csvENTRY_BONUS="`echo "$record" | awk -F ',' '{print $19}'`"
+
+            json="`cat result.json`"
+            json="`echo \"$json\" | jq \".${select}Measurement.TIME|=\\\"$csvTIME\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.MEASUREMENT_TIME|=\\\"$csvMEASUREMENT_TIME\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.RUN_TIME|=\\\"$csvRUN_TIME\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.GATE1|=\\\"$csvGATE1\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.GATE2|=\\\"$csvGATE2\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.GOAL|=\\\"$csvGOAL\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.GARAGE_STOP|=\\\"$csvGARAGE_STOP\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.GARAGE_TIME|=\\\"$csvGARAGE_TIME\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.SLALOM|=\\\"$csvSLALOM\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.PETBOTTLE|=\\\"$csvPETBOTTLE\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.BLOCK_IN_GARAGE|=\\\"$csvBLOCK_IN_GARAGE\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.BLOCK_YUKOIDO|=\\\"$csvBLOCK_YUKOIDO\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.CARD_NUMBER_CIRCLE|=\\\"$csvCARD_NUMBER_CIRCLE\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.BLOCK_NUMBER_CIRCLE|=\\\"$csvBLOCK_NUMBER_CIRCLE\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.BLOCK_BINGO|=\\\"$csvBLOCK_BINGO\\\"\"`"
+            json="`echo \"$json\" | jq \".${select}Measurement.ENTRY_BONUS|=\\\"$csvENTRY_BONUS\\\"\"`"
+
+            echo $json | jq -M . > result.json
+            count=$(( $count + 1 ))
         fi
     done
-    echo "good: $good  bad: $bad"
+    echo "count: $count"
 
 # getCsv </path/to/up_sim>
 elif [ "$1" == "getCsv" ]; then
@@ -173,6 +198,21 @@ elif [ "$1" == "updateMatchmaker" ]; then
         echo "${teamID}_${course} <- $target"
         cp "$update/$target" "${teamID}_${course}"
     done
+
+# copyMp4 </path/to/up_sim_dist> </path/to/up_sim_src> 
+elif [ "$1" == "copyMp4" ]; then
+    dist="$2"
+    src="$3"
+    cd "$src"
+    for line in `ls -1 "$src"`; do
+        echo $line
+        folderName="$line"
+        cd "$folderName"
+        target="`ls -1 | grep \"^[LR][0-9]\\{8\\}-.*.mp4$\" | head -n 1`"
+        cp "$target" "$dist/$folderName"
+        cd "$src"
+    done
+
 else
     echo "usage:"
     echo "  prepare_final.sh expand </path/to/Datum>"
