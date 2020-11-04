@@ -616,6 +616,49 @@ else
     if [ -f "$src" ]; then
         cp "$src" "$result/$dest.csv"
     fi
+
+    # update result.json
+    record="`cat "$result/$dest.csv" | tail -n 1 | sed -E 's/\r//g'`"
+    csvTime="`echo "$record" | awk -F ',' '{print $1}'`"
+    csvCounter="`echo "$record" | awk -F ',' '{print $2}'`"
+    csvFilename="`echo "$record" | awk -F ',' '{print $3}'`"
+    csvTIME="`echo "$record" | awk -F ',' '{print $4}'`"
+    csvMEASUREMENT_TIME="`echo "$record" | awk -F ',' '{print $5}'`"
+    csvRUN_TIME="`echo "$record" | awk -F ',' '{print $6}'`"
+    csvGATE1="`echo "$record" | awk -F ',' '{print $7}'`"
+    csvGATE2="`echo "$record" | awk -F ',' '{print $8}'`"
+    csvGOAL="`echo "$record" | awk -F ',' '{print $9}'`"
+    csvGARAGE_STOP="`echo "$record" | awk -F ',' '{print $10}'`"
+    csvGARAGE_TIME="`echo "$record" | awk -F ',' '{print $11}'`"
+    csvSLALOM="`echo "$record" | awk -F ',' '{print $12}'`"
+    csvPETBOTTLE="`echo "$record" | awk -F ',' '{print $13}'`"
+    csvBLOCK_IN_GARAGE="`echo "$record" | awk -F ',' '{print $14}'`"
+    csvBLOCK_YUKOIDO="`echo "$record" | awk -F ',' '{print $15}'`"
+    csvCARD_NUMBER_CIRCLE="`echo "$record" | awk -F ',' '{print $16}'`"
+    csvBLOCK_NUMBER_CIRCLE="`echo "$record" | awk -F ',' '{print $17}'`"
+    csvBLOCK_BINGO="`echo "$record" | awk -F ',' '{print $18}'`"
+    csvENTRY_BONUS="`echo "$record" | awk -F ',' '{print $19}'`"
+
+    json="`cat result.json`"
+    json="`echo \"$json\" | jq \".${course}Measurement.TIME|=\\\"$csvTIME\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.MEASUREMENT_TIME|=\\\"$csvMEASUREMENT_TIME\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.RUN_TIME|=\\\"$csvRUN_TIME\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.GATE1|=\\\"$csvGATE1\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.GATE2|=\\\"$csvGATE2\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.GOAL|=\\\"$csvGOAL\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.GARAGE_STOP|=\\\"$csvGARAGE_STOP\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.GARAGE_TIME|=\\\"$csvGARAGE_TIME\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.SLALOM|=\\\"$csvSLALOM\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.PETBOTTLE|=\\\"$csvPETBOTTLE\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.BLOCK_IN_GARAGE|=\\\"$csvBLOCK_IN_GARAGE\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.BLOCK_YUKOIDO|=\\\"$csvBLOCK_YUKOIDO\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.CARD_NUMBER_CIRCLE|=\\\"$csvCARD_NUMBER_CIRCLE\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.BLOCK_NUMBER_CIRCLE|=\\\"$csvBLOCK_NUMBER_CIRCLE\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.BLOCK_BINGO|=\\\"$csvBLOCK_BINGO\\\"\"`"
+    json="`echo \"$json\" | jq \".${course}Measurement.ENTRY_BONUS|=\\\"$csvENTRY_BONUS\\\"\"`"
+
+    echo $json | jq -M . > result.json
+
     src="console.log"
     if [ -f "$src" ]; then
         cp "$src" "$result/"
