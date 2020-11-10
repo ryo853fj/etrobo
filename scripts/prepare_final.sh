@@ -213,6 +213,48 @@ elif [ "$1" == "copyMp4" ]; then
         cd "$src"
     done
 
+# copyCsv </path/to/up_sim_dist> </path/to/up_sim_src> 
+elif [ "$1" == "copyCsv" ]; then
+    dist="$2"
+    src="$3"
+    cd "$src"
+    for line in `ls -1 "$src"`; do
+        echo $line
+        folderName="`echo \"$line\" | sed -E 's/^(.*)\.csv$/\1/'`"
+        cd "$dist/$folderName"
+        target="`ls -1 | grep \"^[LR][0-9]\\{8\\}-.*.csv$\" | head -n 1`"
+        cp "$src/$line" "./$target"
+        cd "$src"
+    done
+
+# touchThemAll </path/to/folder> [<"YYYY-MM-DD HH:MM:SS">]
+elif [ "$1" == "touchThemAll" ]; then
+    folderName="$2"
+    datetime="$3"
+    for target in `find "$folderName"`; do
+        if [ -z "$datetime" ]; then
+            echo "$target"
+            touch "$target"
+        else
+            echo "$target -> $datetime"
+            touch -cm -d "$datetime" "$target"
+        fi
+    done
+
+# packWithoutChampionships </path/to/up_sim> </path/to/cs.txt>
+elif [ "$1" == "packWithoutChampionships" ]; then
+    folderName="$2"
+    datetime="$3"
+    for target in `find "$folderName"`; do
+        if [ -z "$datetime" ]; then
+            echo "$target"
+            touch "$target"
+        else
+            echo "$target -> $datetime"
+            touch -cm -d "$datetime" "$target"
+        fi
+    done
+
 else
     echo "usage:"
     echo "  prepare_final.sh expand </path/to/Datum>"
