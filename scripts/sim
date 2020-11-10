@@ -468,6 +468,7 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
                             json=`curl -s -X GET $ETROBO_SIM_COMM?MEASUREMENT=GO`
                             echo " ]" | tee $console
                             echo "[ launcher: Go!!!!!!!! ]" | tee $console
+                            echo "$json" | jq . > result.json
                         elif [ "$sim_opt" == "matchmaker" ]; then
                             echo "[ launcher: $sim_select: slave of matchmaker mode ]" | tee $console
                             if [ -n "$loop" ]; then
