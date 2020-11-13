@@ -241,19 +241,49 @@ elif [ "$1" == "touchThemAll" ]; then
         fi
     done
 
-# packWithoutChampionships </path/to/up_sim> </path/to/cs.txt>
-elif [ "$1" == "packWithoutChampionships" ]; then
-    folderName="$2"
-    datetime="$3"
-    for target in `find "$folderName"`; do
-        if [ -z "$datetime" ]; then
-            echo "$target"
-            touch "$target"
+# devideCS </path/to/result>
+elif [ "$1" == "devideCS" ]; then
+    src="$2"
+    dist="${src}_cs"
+    if [ ! -d "$dist" ]; then
+        mkdir "$dist"
+        while read line; do
+            echo $line
+            mv "${src}_L" "$dist/"
+            mv "${src}_R" "$dist/"
+        done < "$ETROBO_ROOT/dist/teamlist_cs.txt"
+    fi
+
+# rezip </path/to/result>
+elif [ "$1" == "rezip" ]; then
+    src="$2"
+    dist="${src}_zip"
+    if [ ! -d "$dist" ]; then
+        mkdir "$dist"
+    fi
+    cd "$src"
+    for line in `ls -1 "$src"`; do
+        echo $line
+        zip -r "$dist/${line}.zip" $line
+    done 
+
+# renameResults </path/to/Results>
+elif [ "$1" == "renameResults" ]; then
+    src="$2"
+    while read line; do
+        raceID="`echo "$line" | awk '{print $1}'`"
+        teamID="${raceID:0:4}"
+        requestID="`echo "$line" | awk '{print $2}'`"
+        target="${raceID:0:1}_${requestID}.zip"
+        if [ -n "`cat \"$ETROBO_ROOT/dist/teamlist_cs.txt\" | grep $teamID`" ]; then
+            echo "$raceID is a Championship team."
+        elif [ -f "$src/${raceID}.zip" ]; then
+            echo "$raceID -> $target"
+            mv "$src/${raceID}.zip" "$src/$target"
         else
-            echo "$target -> $datetime"
-            touch -cm -d "$datetime" "$target"
+            echo "******** FATAL ERROR ******** $raceID not found."
         fi
-    done
+    done < "$ETROBO_ROOT/dist/requests_org.txt"
 
 else
     echo "usage:"
