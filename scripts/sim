@@ -362,7 +362,7 @@ if [ "$1" != "env" ] && [ "$1" != "unset" ]; then
 
             # load prefernces from settings.json
             if [ -n "$load_prefs" ] && [ -f settings.json ] && [ "$comm_ready" == "ready" ]; then
-                req="`cat settings.json | jq -M -c .`"
+                req="`cat \"$ETROBO_SIM_DIST/$projName/settings.json\" | jq -M -c .`"
                 if [ -n "$req" ]; then
                     curl -s -X POST -d $req $ETROBO_SIM_COMM > /dev/null
                     sleep 1     # @ToDo: its magic number

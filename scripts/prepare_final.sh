@@ -285,6 +285,38 @@ elif [ "$1" == "renameResults" ]; then
         fi
     done < "$ETROBO_ROOT/dist/requests_org.txt"
 
+# checkInit </path/to/Datum>
+elif [ "$1" == "checkInit" ]; then
+    folderName="$2"
+    for target in `find "$folderName" | grep _race/settings.json$`; do
+        raceName="`echo $(basename $(dirname $target)) | awk '{print toupper($1)}'`"
+        race="${raceName:0:1}"
+        teamID=$(basename $(dirname $(dirname $target)))
+        combinedID="${teamID}_$race"
+        if [ "$race" == "L" ]; then
+            initX_default="3"
+            initY_default="0"
+            initZ_default="-15.61"
+            initROT_default="90"
+            initX="`cat \"$target\" | jq -r .initLX`"
+            initY="`cat \"$target\" | jq -r .initLY`"
+            initZ="`cat \"$target\" | jq -r .initLZ`"
+            initROT="`cat \"$target\" | jq -r .initLROT`"
+        else
+            initX_default="-3"
+            initY_default="0"
+            initZ_default="-15.61"
+            initROT_default="-90"
+            initX="`cat \"$target\" | jq -r .initRX`"
+            initY="`cat \"$target\" | jq -r .initRY`"
+            initZ="`cat \"$target\" | jq -r .initRZ`"
+            initROT="`cat \"$target\" | jq -r .initRROT`"
+        fi
+        if [ "$initX" != "$initX_default" ] || [ "$initY" != "$initY_default" ] || [ "$initZ" != "$initZ_default" ] || [ "$initROT" != "$initROT_default" ]; then
+            echo "$combinedID, $initX, $initY, $initZ, $initROT"
+        fi
+    done
+
 else
     echo "usage:"
     echo "  prepare_final.sh expand </path/to/Datum>"
