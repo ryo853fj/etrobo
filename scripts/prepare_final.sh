@@ -76,6 +76,7 @@ elif [ "$1" == "spread" ]; then
     done
 
 # changeFps </path/to/up_sim> [reencode <divider>] <fps>
+# if your video was fast-forwarded at 2x speed, use `reencode 2.0 60`
 elif [ "$1" == "changeFps" ]; then
     src="$2"
     unset reencode
@@ -196,7 +197,9 @@ elif [ "$1" == "updateMatchmaker" ]; then
         teamID=${target:2:4}
         course=${target:0:1}
         echo "${teamID}_${course} <- $target"
-        cp "$update/$target" "${teamID}_${course}"
+        if [ -d "${teamID}_${course}" ]; then
+            cp "$update/$target" "${teamID}_${course}/"
+        fi
     done
 
 # copyMp4 </path/to/up_sim_dist> </path/to/up_sim_src> 
@@ -249,8 +252,14 @@ elif [ "$1" == "devideCS" ]; then
         mkdir "$dist"
         while read line; do
             echo $line
-            mv "${src}_L" "$dist/"
-            mv "${src}_R" "$dist/"
+            if [ -d "${src}/${line}_L" ]; then
+                echo "${src}/${line}_L -> $dist"
+                mv "${src}/${line}_L" "$dist/"
+            fi
+            if [ -d "${src}/${line}_R" ]; then
+                echo "${src}/${line}_R -> $dist"
+                mv "${src}/${line}_R" "$dist/"
+            fi
         done < "$ETROBO_ROOT/dist/teamlist_cs.txt"
     fi
 
