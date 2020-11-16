@@ -403,6 +403,30 @@ elif [ "$1" == "renamePng" ]; then
         fi
     done < "$ETROBO_ROOT/dist/cs_order.txt"
 
+# devideMovie </path/to/movie>
+elif [ "$1" == "devideMovie" ]; then
+    movie="$2"
+    cd "$movie"
+    while read line; do
+        teamID="`echo $line | awk '{print $1}'`"
+        selectL="`echo $line | awk '{print $2}'`"
+        selectR="`echo $line | awk '{print $3}'`"
+        selectBest="`echo $line | awk '{print $4}'`"
+        order="0`echo $line | awk '{print $5}'`"
+        class="${teamID:0:1}"
+        teamNo="${teamID:1:3}"
+        prefix="${class}-${order:${#order}-2}B_${teamNo}_"
+        
+        src="${prefix}_race.mp4"
+        if [ -f "$src" ]; then
+            echo "$src"
+            ffmpeg -i "$src" -vf crop=640:400:0:0 "${prefix}_race_0.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:640:0 "${prefix}_race_1.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:0:400 "${prefix}_race_2.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:640:400 "${prefix}_race_3.mp4"
+        fi
+    done < "$ETROBO_ROOT/dist/cs_order.txt"
+
 else
     echo "usage:"
     echo "  prepare_final.sh expand </path/to/Datum>"
