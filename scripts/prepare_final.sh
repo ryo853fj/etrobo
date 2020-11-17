@@ -407,7 +407,9 @@ elif [ "$1" == "renamePng" ]; then
 elif [ "$1" == "devideMovie" ]; then
     movie="$2"
     cd "$movie"
-    while read line; do
+    IFS_back="$IFS"
+    IFS=$'\n'
+    for target in `cat "$ETROBO_ROOT/dist/cs_order.txt"`; do
         teamID="`echo $line | awk '{print $1}'`"
         selectL="`echo $line | awk '{print $2}'`"
         selectR="`echo $line | awk '{print $3}'`"
@@ -425,7 +427,8 @@ elif [ "$1" == "devideMovie" ]; then
             ffmpeg -i "$src" -vf crop=640:400:0:400 "${prefix}race_2.mp4"
             ffmpeg -i "$src" -vf crop=640:400:640:400 "${prefix}race_3.mp4"
         fi
-    done < "$ETROBO_ROOT/dist/cs_order.txt"
+    done
+    IFS="$IFS_back"
 
 # getBlockPng </path/to/result> </path/to/result_rerun> [rev]
 elif [ "$1" == "getBlockPng" ]; then
