@@ -417,14 +417,63 @@ elif [ "$1" == "devideMovie" ]; then
         teamNo="${teamID:1:3}"
         prefix="${class}-${order:${#order}-2}B_${teamNo}_"
         
-        src="${prefix}_race.mp4"
+        src="${prefix}race.mp4"
         if [ -f "$src" ]; then
             echo "$src"
-            ffmpeg -i "$src" -vf crop=640:400:0:0 "${prefix}_race_0.mp4"
-            ffmpeg -i "$src" -vf crop=640:400:640:0 "${prefix}_race_1.mp4"
-            ffmpeg -i "$src" -vf crop=640:400:0:400 "${prefix}_race_2.mp4"
-            ffmpeg -i "$src" -vf crop=640:400:640:400 "${prefix}_race_3.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:0:0 "${prefix}race_0.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:640:0 "${prefix}race_1.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:0:400 "${prefix}race_2.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:640:400 "${prefix}race_3.mp4"
         fi
+    done < "$ETROBO_ROOT/dist/cs_order.txt"
+
+# getBlockPng </path/to/result> </path/to/result_rerun> [rev]
+elif [ "$1" == "getBlockPng" ]; then
+    result="$2"
+    result_rerun="$3"
+    rev="$4"
+    if [ -z "$rev" ]; then
+        dist="${result}_block"
+        selector="L"
+        zPost="B"
+    else
+        dist="${result}_block_rev"
+        selector="R"
+        zPost="R"
+    fi
+    if [ ! -d "$dist" ]; then
+        mkdir "$dist"
+    fi
+    while read line; do
+        teamID="`echo $line | awk '{print $1}'`"
+        selectL="`echo $line | awk '{print $2}'`"
+        selectR="`echo $line | awk '{print $3}'`"
+        selectBest="`echo $line | awk '{print $4}'`"
+        order="0`echo $line | awk '{print $5}'`"
+        class="${teamID:0:1}"
+        teamNo="${teamID:1:3}"
+        prefix="${class}-${order:${#order}-2}${zPost}_${teamNo}_"
+        if [ "$selectL" == "前" ]; then
+            folderL="$result/${teamID}_L"
+        else
+            folderL="$result_rerun/${teamID}_L"
+        fi
+        if [ "$selectR" == "前" ]; then
+            folderR="$result/${teamID}_R"
+        else
+            folderR="$result_rerun/${teamID}_R"
+        fi
+        if [ "${selectBest:0:1}" == "$selector" ]; then
+            raceID="${teamID}_L"
+            folderBest="$folderL"
+        else
+            raceID="${teamID}_R"
+            folderBest="$folderR"
+        fi
+        
+        for target in `ls -1 "$folderBest"/*ブロック配置.png`; do
+            cp "$target" "$dist/${prefix}block.png"
+        done
     done < "$ETROBO_ROOT/dist/cs_order.txt"
 
 else
