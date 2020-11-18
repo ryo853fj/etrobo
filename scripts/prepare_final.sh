@@ -403,10 +403,18 @@ elif [ "$1" == "renamePng" ]; then
         fi
     done < "$ETROBO_ROOT/dist/cs_order.txt"
 
-# divideMovie </path/to/movie> </path/to/output>
+# divideMovie </path/to/movie> </path/to/output> rev
 elif [ "$1" == "divideMovie" ]; then
-    movie="$2"
-    dist="$3"
+    unset rev
+    selector="B"
+    if [ "$4" == "rev" ]; then
+        rev="_rev"
+        selector="R"
+    fi
+
+    movie="$2$rev"
+    dist="$3$rev"
+
     cd "$movie"
     IFS_back="$IFS"
     IFS=$'\n'
@@ -418,7 +426,7 @@ elif [ "$1" == "divideMovie" ]; then
         order="0`echo $line | awk '{print $5}'`"
         class="${teamID:0:1}"
         teamNo="${teamID:1:3}"
-        prefix="${class}-${order:${#order}-2}B_${teamNo}_"
+        prefix="${class}-${order:${#order}-2}${selector}_${teamNo}_"
         
         src="${prefix}race.mp4"
         if [ -f "$src" ]; then
@@ -528,3 +536,6 @@ else
     echo "  prepare_final.sh updateResult </path/to/up_sim>"
     echo "  prepare_final.sh getCsv </path/to/up_sim>"
 fi
+
+# oneliners
+#for target in `ls -1`; do dist="`echo $target | sed -E 's/^(.)-.*_(.*)_race_mux.mp4/\1\2.mp4/'`"; echo "$target -> $dist"; mv $target $dist; done
