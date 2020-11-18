@@ -403,13 +403,14 @@ elif [ "$1" == "renamePng" ]; then
         fi
     done < "$ETROBO_ROOT/dist/cs_order.txt"
 
-# devideMovie </path/to/movie>
-elif [ "$1" == "devideMovie" ]; then
+# divideMovie </path/to/movie> </path/to/output>
+elif [ "$1" == "divideMovie" ]; then
     movie="$2"
+    dist="$3"
     cd "$movie"
     IFS_back="$IFS"
     IFS=$'\n'
-    for target in `cat "$ETROBO_ROOT/dist/cs_order.txt"`; do
+    for line in `cat "$ETROBO_ROOT/dist/cs_order.txt"`; do
         teamID="`echo $line | awk '{print $1}'`"
         selectL="`echo $line | awk '{print $2}'`"
         selectR="`echo $line | awk '{print $3}'`"
@@ -422,10 +423,50 @@ elif [ "$1" == "devideMovie" ]; then
         src="${prefix}race.mp4"
         if [ -f "$src" ]; then
             echo "$src"
-            ffmpeg -i "$src" -vf crop=640:400:0:0 "${prefix}race_0.mp4"
-            ffmpeg -i "$src" -vf crop=640:400:640:0 "${prefix}race_1.mp4"
-            ffmpeg -i "$src" -vf crop=640:400:0:400 "${prefix}race_2.mp4"
-            ffmpeg -i "$src" -vf crop=640:400:640:400 "${prefix}race_3.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:0:0 -r 60 "$dist/${prefix}race_0.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:640:0 -r 60 "$dist/${prefix}race_1.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:0:400 -r 60 "$dist/${prefix}race_2.mp4"
+            ffmpeg -i "$src" -vf crop=640:400:640:400 -r 60 "$dist/${prefix}race_3.mp4"
+        else
+            echo "$src not found"
+        fi
+    done
+    IFS="$IFS_back"
+
+
+# muxMovie </path/to/movie>
+elif [ "$1" == "muxMovie" ]; then
+    movie="$2"
+    cd "$movie"
+    IFS_back="$IFS"
+    IFS=$'\n'
+    for line in `cat "$ETROBO_ROOT/dist/cs_order.txt"`; do
+        teamID="`echo $line | awk '{print $1}'`"
+        selectL="`echo $line | awk '{print $2}'`"
+        selectR="`echo $line | awk '{print $3}'`"
+        selectBest="`echo $line | awk '{print $4}'`"
+        order="0`echo $line | awk '{print $5}'`"
+        class="${teamID:0:1}"
+        teamNo="${teamID:1:3}"
+        prefix="${class}-${order:${#order}-2}B_${teamNo}_"
+        
+        if [ -f "${prefix}race_0.mp4" ]; then
+            echo "${prefix}race_mux.mp4"
+            ffmpeg	-i "${prefix}mm.mp4" -i "${prefix}race_1.mp4" -i "${prefix}race_2.mp4" -i "${prefix}race_3.mp4" \
+                -filter_complex " \
+                    color=s=1280x800:c=black [base]; \
+                    [0:v] scale=640x400:force_original_aspect_ratio=decrease [upperleft]; \
+                    [1:v] setpts=PTS/0.99, scale=640x400 [upperright]; \
+                    [2:v] setpts=PTS/0.99, scale=640x400 [lowerleft]; \
+                    [3:v] setpts=PTS/0.99, scale=640x400 [lowerright]; \
+                    [base][upperleft] overlay=shortest=1:x=40 [tmp1]; \
+                    [tmp1][upperright] overlay=shortest=1:x=640 [tmp2]; \
+                    [tmp2][lowerleft] overlay=shortest=1:y=400 [tmp3]; \
+                    [tmp3][lowerright] overlay=shortest=1:x=640:y=400 \
+                " \
+            	-r 60 ${prefix}race_mux.mp4
+        else
+            echo "$src not found"
         fi
     done
     IFS="$IFS_back"
