@@ -442,9 +442,11 @@ elif [ "$1" == "divideMovie" ]; then
     IFS="$IFS_back"
 
 
-# muxMovie </path/to/movie>
+# muxMovie </path/to/movie> <divider>
+# divider:  1.00 or 0.99
 elif [ "$1" == "muxMovie" ]; then
     movie="$2"
+    divider="$3"
     cd "$movie"
     IFS_back="$IFS"
     IFS=$'\n'
@@ -464,9 +466,9 @@ elif [ "$1" == "muxMovie" ]; then
                 -filter_complex " \
                     color=s=1280x800:c=black [base]; \
                     [0:v] scale=640x400:force_original_aspect_ratio=decrease [upperleft]; \
-                    [1:v] setpts=PTS/0.99, scale=640x400 [upperright]; \
-                    [2:v] setpts=PTS/0.99, scale=640x400 [lowerleft]; \
-                    [3:v] setpts=PTS/0.99, scale=640x400 [lowerright]; \
+                    [1:v] setpts=PTS/$divider, scale=640x400 [upperright]; \
+                    [2:v] setpts=PTS/$divider, scale=640x400 [lowerleft]; \
+                    [3:v] setpts=PTS/$divider, scale=640x400 [lowerright]; \
                     [base][upperleft] overlay=shortest=1:x=40 [tmp1]; \
                     [tmp1][upperright] overlay=shortest=1:x=640 [tmp2]; \
                     [tmp2][lowerleft] overlay=shortest=1:y=400 [tmp3]; \
