@@ -438,7 +438,7 @@ elif [ "$1" == "divideMovie" ]; then
             if [ -n "$stretch" ]; then
                 src_src="$src"
                 src="${prefix}race_stretch.mp4"
-                cmd.exe /c "..\\ffmpeg.exe -i $src_src -vf tpad=stop=180:stop_mode=clone $src"    
+                cmd.exe /c "..\\ffmpeg\\bin\\ffmpeg -i $src_src -vf tpad=stop=${stretch}:stop_mode=clone $src"    
             fi
 
             ffmpeg -i "$src" -vf crop=640:400:0:0 -r 60 "$dist/${prefix}race_0.mp4"
@@ -452,12 +452,13 @@ elif [ "$1" == "divideMovie" ]; then
     IFS="$IFS_back"
 
 
-# muxMovie </path/to/movie> <divider>
+# muxMovie </path/to/movie> </path/to/output> <divider>
 # divider:  1.00 or 0.99
 elif [ "$1" == "muxMovie" ]; then
     movie="$2"
-    divider="$3"
-    cd "$movie"
+    dist="$3"
+    divider="$4"
+    cd "$dist"
     IFS_back="$IFS"
     IFS=$'\n'
     for line in `cat "$ETROBO_ROOT/dist/cs_order.txt"`; do
@@ -472,14 +473,14 @@ elif [ "$1" == "muxMovie" ]; then
         
         if [ -f "${prefix}race_0.mp4" ]; then
             echo "${prefix}race_mux.mp4"
-            ffmpeg	-i "${prefix}mm.mp4" -i "${prefix}race_1.mp4" -i "${prefix}race_2.mp4" -i "${prefix}race_3.mp4" \
+            ffmpeg	-i "$movie/${prefix}mm.mp4" -i "${prefix}race_1.mp4" -i "${prefix}race_2.mp4" -i "${prefix}race_3.mp4" \
                 -filter_complex " \
                     color=s=1280x800:c=black [base]; \
                     [0:v] scale=640x400:force_original_aspect_ratio=decrease [upperleft]; \
                     [1:v] setpts=PTS/$divider, scale=640x400 [upperright]; \
                     [2:v] setpts=PTS/$divider, scale=640x400 [lowerleft]; \
                     [3:v] setpts=PTS/$divider, scale=640x400 [lowerright]; \
-                    [base][upperleft] overlay=shortest=1:x=40 [tmp1]; \
+                    [base][upperleft] overlay=shortest=1:x=51 [tmp1]; \
                     [tmp1][upperright] overlay=shortest=1:x=640 [tmp2]; \
                     [tmp2][lowerleft] overlay=shortest=1:y=400 [tmp3]; \
                     [tmp3][lowerright] overlay=shortest=1:x=640:y=400 \
