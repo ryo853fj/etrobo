@@ -403,13 +403,17 @@ elif [ "$1" == "renamePng" ]; then
         fi
     done < "$ETROBO_ROOT/dist/cs_order.txt"
 
-# divideMovie </path/to/movie> </path/to/output> rev
+# divideMovie </path/to/movie> </path/to/output> best|rev [stretch <stretch frame>]
 elif [ "$1" == "divideMovie" ]; then
     unset rev
     selector="B"
     if [ "$4" == "rev" ]; then
         rev="_rev"
         selector="R"
+    fi
+    unset stretch
+    if [ "$5" == "stretch" ]; then
+        stretch="$6"
     fi
 
     movie="$2$rev"
@@ -431,6 +435,12 @@ elif [ "$1" == "divideMovie" ]; then
         src="${prefix}race.mp4"
         if [ -f "$src" ]; then
             echo "$src"
+            if [ -n "$stretch" ]; then
+                src_src="$src"
+                src="${prefix}race_stretch.mp4"
+                cmd.exe /c "..\\ffmpeg.exe -i $src_src -vf tpad=stop=180:stop_mode=clone $src"    
+            fi
+
             ffmpeg -i "$src" -vf crop=640:400:0:0 -r 60 "$dist/${prefix}race_0.mp4"
             ffmpeg -i "$src" -vf crop=640:400:640:0 -r 60 "$dist/${prefix}race_1.mp4"
             ffmpeg -i "$src" -vf crop=640:400:0:400 -r 60 "$dist/${prefix}race_2.mp4"
