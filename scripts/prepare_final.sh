@@ -276,19 +276,29 @@ elif [ "$1" == "rezip" ]; then
         zip -r "$dist/${line}.zip" $line
     done 
 
-# renameResults </path/to/Results>
+# renameResults </path/to/Results> [cs]
 elif [ "$1" == "renameResults" ]; then
     src="$2"
+    cs="$3"
     while read line; do
         raceID="`echo "$line" | awk '{print $1}'`"
         teamID="${raceID:0:4}"
         requestID="`echo "$line" | awk '{print $2}'`"
         target="${raceID:0:1}_${requestID}.zip"
         if [ -n "`cat \"$ETROBO_ROOT/dist/teamlist_cs.txt\" | grep $teamID`" ]; then
-            echo "$raceID is a Championship team."
+            if [ -n "$cs" ]; then
+                echo "$raceID -> $target"
+                mv "$src/${raceID}.zip" "$src/$target"
+            else
+                echo "$raceID is not a Championship team."
+            fi
         elif [ -f "$src/${raceID}.zip" ]; then
-            echo "$raceID -> $target"
-            mv "$src/${raceID}.zip" "$src/$target"
+            if [ -z "$cs" ]; then
+                echo "$raceID -> $target"
+                mv "$src/${raceID}.zip" "$src/$target"
+            else
+                echo "$raceID is a Championship team."
+            fi
         else
             echo "******** FATAL ERROR ******** $raceID not found."
         fi
@@ -539,6 +549,37 @@ elif [ "$1" == "getBlockPng" ]; then
         for target in `ls -1 "$folderBest"/*ブロック配置.png`; do
             cp "$target" "$dist/${prefix}block.png"
         done
+    done < "$ETROBO_ROOT/dist/cs_order.txt"
+
+# choiceResult </path/to/result(_rerun)> </path/to/dist>
+elif [ "$1" == "choiceResult" ]; then
+    result="$2"
+    result_rerun="${result}_rerun"
+    dist="$3"
+    if [ ! -d "$dist" ]; then
+        mkdir "$dist"
+    fi
+    while read line; do
+        teamID="`echo $line | awk '{print $1}'`"
+        selectL="`echo $line | awk '{print $2}'`"
+        selectR="`echo $line | awk '{print $3}'`"
+        selectBest="`echo $line | awk '{print $4}'`"
+        order="0`echo $line | awk '{print $5}'`"
+        if [ "$selectL" == "前" ]; then
+            folderL="$result/${teamID}_L"
+        else
+            folderL="$result_rerun/${teamID}_L"
+        fi
+        if [ "$selectR" == "前" ]; then
+            folderR="$result/${teamID}_R"
+        else
+            folderR="$result_rerun/${teamID}_R"
+        fi
+
+        echo "$teamID -> $folderL : $folderR"
+        cp -r "$folderL" "$dist/"
+        cp -r "$folderR" "$dist/"
+
     done < "$ETROBO_ROOT/dist/cs_order.txt"
 
 else
