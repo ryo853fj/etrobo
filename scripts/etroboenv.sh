@@ -11,6 +11,7 @@ currentDir="`pwd`"
 if [ "$1" = "unset" ]; then
     . sim unset
     . etrobopkg unset
+    . ffutil unset
     . etrobopath.sh unset
     unset ETROBO_ENV
     unset ETROBO_ENV_VER
@@ -90,6 +91,7 @@ else
         # import module envs
         . "$ETROBO_SCRIPTS/sim" env
         . "$ETROBO_SCRIPTS/etrobopkg" env
+        . "$ETROBO_SCRIPTS/ffutil" env
         . "$ETROBO_SCRIPTS/etrobopath.sh"
 
         if [ "$BEERHALL_INVOKER" != "booting" ] && [ -z "$quit" ]; then

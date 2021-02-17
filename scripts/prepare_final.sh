@@ -1,16 +1,34 @@
 #!/usr/bin/env bash
 #
-# Blob storage expander
+# Postproduction utilities
 #   prepare_final.sh
 # Author: jtFuruhata
 # Copyright (c) 2020 ETロボコン実行委員会, Released under the MIT license
 # See LICENSE
 #
 
+# this script requires some additional files in $ETROBO_ROOT/dist:
+#  cs_order.txt     teamID(A006)	    selectL(前)	    selectR(前)	    selectBest(R前)	    order(1)
+#  requests.txt     combinedID(A001)	prefixes(l_A_)	requestID(d04b9160-cca3-43e3-b712-19c5ffd4c964)
+#  teamlist_cs.txt  teamID(A001)
+#  teamlist.txt     teamID(001)         combinedID(A001)
+#
+# ToDo: yep these file structures should be refactored
+
+#
 # expand </path/to/datum>
+#
+# Blob storage expander for the MatchMaker integration
+#
+# All `Requests` files were in the ETroboSimRunner's Blob storage.
+# First you need to download from there into `/path/to/datum`.
+# `expand` converts from this Blob storage structure to the MatchMaker integration structure.
+# This folder is called `Datum`.
 if [ "$1" == "expand" ]; then
+    # Blob storage data folder
     datumDir="$2"
     cd "$datumDir"
+    # rename folder names which named teamID(001) to combinedID(A001) 
     while read line; do
         teamId=`echo $line | awk '{print $1}'`
         combinedId=`echo $line | awk '{print $2}'`
@@ -19,6 +37,7 @@ if [ "$1" == "expand" ]; then
         fi
     done < "$ETROBO_ROOT/dist/teamlist.txt"
 
+    # expand files as the MatchMaker integration structure
     while read line; do
         combinedId=`echo "$line" | awk '{print $1}'`
         prefixies=`echo "$line" | awk '{print $2}'`
@@ -26,6 +45,7 @@ if [ "$1" == "expand" ]; then
         course=${prefixies:0:2}
         cd "$combinedId"
 
+        # make unziped folders
         if [ ! -d l_race ] || [ ! -d r_race ]; then
             echo "$line"
             srcDir="$requestId/req"
@@ -53,7 +73,16 @@ if [ "$1" == "expand" ]; then
         cd "$datumDir"
     done < "$ETROBO_ROOT/dist/requests.txt"
 
+#
 # spread </path/to/Results>
+#
+# `Results` spreader to up_sim
+#
+# In MatchMaker integration mode, all `Results` files are stay in the local `Results` folder.
+# A operator usually copies these files from sim_vm as appropriate during the race
+# into separate folders that prefixed `sim`.
+# `spread` unzips </path/to/Results> files into </path/to/up_Results>.
+# These folders are called `up_sim`.
 elif [ "$1" == "spread" ]; then
     results="$2"
     cd "$results"
@@ -589,6 +618,7 @@ else
     echo "  prepare_final.sh changeFps </path/to/up_sim> [reencode <divider>] <fps>"
     echo "  prepare_final.sh updateResult </path/to/up_sim>"
     echo "  prepare_final.sh getCsv </path/to/up_sim>"
+    echo "Further Information: please read this source code carefully."
 fi
 
 # oneliners
