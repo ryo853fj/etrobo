@@ -75,7 +75,7 @@ if [ "$1" = "btcat" ]; then
 fi
 
 # sugar command for noobs
-if [ "$1" = "sample" ]; then
+if [ "$1" = "go" ]; then
     if [ "$2" = "tr" ]; then
         cd "$ETROBO_ROOT"
         make $skiphrp3 $strip $import $courseSelect $manual_launch $unprefs $btcat app="etrobo_tr" sim up
